@@ -7,6 +7,6 @@ const router = Router();
 
 router.route("/add-service").post(verifyJWT, upload.single("thumbnail"), addService);
 router.route("/add-gallery").post(verifyJWT, upload.array("images", 10), uploadGallery)
-router.route("/get-services").get(verifyJWT, getAllServices);
+router.route("/get-services/:id").get(verifyJWT, getAllServices);
 
 export default router;

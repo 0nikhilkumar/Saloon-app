@@ -131,7 +131,14 @@ export const uploadGallery = asyncHandler(async (req, res)=> {
     return res.status(201).json(new ApiResponse(201, "Gallery images added successfully", services));
 });
 
-export const getAllServices = asyncHandler(async (req, res)=> {
-    const getservices = await Service.find();
+export const getAllServicesOfPartner = asyncHandler(async (req, res)=> {
+    const { id } = req.params;
+    if(!id){
+        return res.status(401).json(new ApiResponse(401, "Please provide the partner id"));
+    }
+    const getservices = await Service.findOne({ partnerId: id });
+    if(!getservices){
+        return res.status(404).json(new ApiResponse(404, "There is no any service of this saloon", getservices));
+    }
     return res.status(200).json(new ApiResponse(200, "Service fetched successfully", getservices));
 });
