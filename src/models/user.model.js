@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       index: true,
     },
+    
     username: {
       type: String,
       unique: true,
@@ -16,6 +17,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
+
     email: {
       type: String,
       lowercase: true,
@@ -23,45 +25,52 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+
     password: {
       type: String,
       required: true,
     },
+
     phoneNumber: {
       type: String,
     },
+
     profileImageUrl: {
       type: String,
     },
+
     gender: {
       type: String,
+      enum: ["Male", "Female"]
     },
+
     location: {
       address: { type: String },
-      coordinates: {
-        latitude: { type: Number },
-        longitude: { type: Number },
-      },
+      latitude: {type: String},
+      longitude: {type: String},
     },
+
     verifyCode: {
-        type: String,
-        required: [true, "Verify Code is required"],
+      type: String,
+      required: [true, "Verify Code is required"],
     },
+
     verifyCodeExpiry: {
-        type: Date,
-        required: [true, "Verify Code Expiry is required"],
+      type: Date,
+      required: [true, "Verify Code Expiry is required"],
     },
+
     token: { type: String },
-    isVerified: {type: Boolean, default: false}
-    // preferredService: [{ type: String }],
-    // preferredStylist: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "Partner"
-    // },
-    // bookings: [{type: mongoose.Schema.Types.ObjectId, ref: "Booking"}]
+
+    isVerified: { type: Boolean, default: false },
+
+    role: {
+      type: String,
+      enum: ["User", "Partner"],
+      default: "User"
+    },
   },
-  { timestamps: true }
-);
+  { timestamps: true });
 
 userSchema.pre('save', async function (next){
   if(!this.isModified('password')) return next();

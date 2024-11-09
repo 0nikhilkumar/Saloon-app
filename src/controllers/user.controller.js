@@ -2,8 +2,8 @@ import crypto from "crypto";
 import User from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import sendingOTP from "../utils/resend.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import sendMail from "../utils/nodemailer.js";
 
 const generateToken = async (userId) => {
     try {
@@ -18,7 +18,7 @@ const generateToken = async (userId) => {
 };
 
 export const register = asyncHandler(async (req, res)=> {
-    const {username, email, password} = req.body;
+    const {username, email, password, role} = req.body;
     if(!username || !email || !password) {
         return res.status(400).json(new ApiResponse(400, "Please fill all the fields"))
     }
@@ -42,7 +42,6 @@ export const register = asyncHandler(async (req, res)=> {
             return res.status(400).json(new ApiResponse(400, "User already exists with this email"));
         }
         else{
-            // const hashedPassword = await bcrypt.hash(password, 10);
             existingUserByEmail.password = password;
             existingUserByEmail.verifyCode = verifyCode;
             existingUserByEmail.verifyCodeExpiry = new Date(Date.now() + 3600000);
@@ -50,7 +49,6 @@ export const register = asyncHandler(async (req, res)=> {
         }
     }
     else{
-        // const hashedPassword = await bcrypt.hash(password, 10);
         const expiryDate = new Date();
         expiryDate.setHours(expiryDate.getHours() + 1);
 
@@ -59,13 +57,14 @@ export const register = asyncHandler(async (req, res)=> {
             email,
             password,
             verifyCode,
-            verifyCodeExpiry: expiryDate
+            verifyCodeExpiry: expiryDate,
+            role,
         });
 
         await newUser.save();
     }
 
-    await sendingOTP(email, verifyCode, username);
+    await sendMail(email, verifyCode, username);
 
     return res.status(201).json(new ApiResponse(201, "User registerd successfully"));
 });
@@ -154,7 +153,6 @@ export const logout = asyncHandler(async (req, res)=> {
 
 export const forgotPassword = asyncHandler(async (req, res)=> {
     try {
-        console.log("hi");
         const {oldPassword, newPassword} = req.body;
         if(!oldPassword || !newPassword){
             return res.status(401).json(new ApiResponse(401, "Please fill all the fields"));
@@ -162,14 +160,12 @@ export const forgotPassword = asyncHandler(async (req, res)=> {
 
         const user = await User.findById(req.user?._id);
 
-        console.log("helo");
 
         const isPasswordCorrect = await user.isCorrectPassword(oldPassword);
         if(!isPasswordCorrect){
             return res.status(401).json(new ApiResponse(401, "Invalid password"));
         }
 
-        console.log("new");
         user.password = newPassword;
         await user.save({validateBeforeSave: false});
         return res.status(200).json(new ApiResponse(200, "Password changed successfully"));        
@@ -190,7 +186,7 @@ export const completeDetails = asyncHandler(async (req, res)=> {
 
         let avatar;
         if(avatarLocalPath){
-            avatar = await uploadOnCloudinary(avatarLocalPath);
+            avatar = await uploadOnCloudinary(avatarLocalPath, "users");
     
             if(!avatar.url){
                 console.log("error");
@@ -198,6 +194,10 @@ export const completeDetails = asyncHandler(async (req, res)=> {
         }
 
         const gettingUser = await User.findById(req.user?._id);
+
+        if(!gettingUser){
+            return res.status(404).json(new ApiResponse(404, "User not found"));
+        }
 
         const user = await User.findByIdAndUpdate(req.user?._id, {
             $set: {
@@ -218,4 +218,16 @@ export const completeDetails = asyncHandler(async (req, res)=> {
         console.log(error);
         return res.status(500).json(new ApiResponse(500, "Internal Server Error"));
     }
+});
+
+export const gettingAllUsers = asyncHandler(async (req, res)=> {
+    const getAllVerifiedUsers = await User.find({
+        $and: [{isVerified: true}, {role: "User"}]
+    }).select("-token -password -verifyCode -verifyCodeExpiry");
+
+    if(!getAllVerifiedUsers){
+        return res.status(403).json(new ApiResponse(403, "User Not Fetched Successfully"));
+    }
+
+    return res.status(200).json(new ApiResponse(200, "User Fetched Successfully", getAllVerifiedUsers));
 });
