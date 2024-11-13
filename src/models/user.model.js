@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       index: true,
     },
-    
+
     username: {
       type: String,
       unique: true,
@@ -41,36 +41,31 @@ const userSchema = new mongoose.Schema(
 
     gender: {
       type: String,
-      enum: ["Male", "Female"]
+      enum: ["Male", "Female"],
     },
 
     location: {
       address: { type: String },
-      latitude: {type: String},
-      longitude: {type: String},
+      latitude: { type: String },
+      longitude: { type: String },
     },
 
-    verifyCode: {
-      type: String,
-      required: [true, "Verify Code is required"],
-    },
-
-    verifyCodeExpiry: {
-      type: Date,
-      required: [true, "Verify Code Expiry is required"],
-    },
-
-    token: { type: String },
+    tokenId: { type: mongoose.Schema.Types.ObjectId, ref: "Token" },
 
     isVerified: { type: Boolean, default: false },
 
     role: {
       type: String,
       enum: ["User", "Partner"],
-      default: "User"
+      default: "User",
     },
+    otp: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Otp",
+    }],
   },
-  { timestamps: true });
+  { timestamps: true }
+);
 
 userSchema.pre('save', async function (next){
   if(!this.isModified('password')) return next();

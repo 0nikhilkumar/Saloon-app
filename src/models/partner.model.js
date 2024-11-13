@@ -27,6 +27,7 @@ const partnerSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    adhaarCardOrPanCard: [{type: String}],
   },
   { timestamps: true }
 );

@@ -2,6 +2,7 @@ import { Partner } from "../models/partner.model.js";
 import User from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 export const setupProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user?._id);
@@ -145,6 +146,53 @@ export const updatePartnerProfile = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, "Partner shop updated Successfully"));
+});
+
+export const verificationOfPartner = asyncHandler(async (req, res)=> {
+  const user = await User.findById(req.user?._id);
+
+  if (!user) {
+    return res.status(404).json(new ApiResponse(404, "Invalid Credentials"));
+  }
+
+  const role = user.role;
+  if (role !== "Partner")
+    return res
+      .status(400)
+      .json(
+        new ApiResponse(
+          400,
+          "You are not a partner then you cannot setup these things"
+        )
+      );
+
+    const { partnerId } = req.params;
+    if(!partnerId){
+      return res.status(403).json(new ApiResponse(403, "Please provide Parnter Id"));
+    }
+
+    if(!req.files){
+        return res.status(401).json(new ApiResponse(401, "Please provide the adhaar card or pan card images"));
+    }
+
+    const files = req.files.map(async (file)=> {
+        return await uploadOnCloudinary(file.path, 'verificationImages')
+    });
+
+    const result = await Promise.all(files);
+    const imageURL = result.map((item)=> item.url);
+    
+    const verification = await Partner.findByIdAndUpdate(partnerId, {
+      $push: {
+        adhaarCardOrPanCard: imageURL
+      }
+    });
+    if(!verification){
+        return res.status(404).json(new ApiResponse(404, "Something went wrong while doing verification"));
+    }
+
+    return res.status(200).json(new ApiResponse(200, "Congratulation Your verification is done", verification));
+    
 });
 
 export const gettingAllPartners = asyncHandler(async (req, res)=> {  

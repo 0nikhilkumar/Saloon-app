@@ -23,8 +23,6 @@ const serviceSchema = new mongoose.Schema({
     },
     gallery: [{type: String}],
 
-    //todo -> yaha pe sirf ek hi status hi hoga ussi ke through sab data milega user ka + service id ka + booking Id ka 
-
     status: {
         type: String,
         enum: ["Upcoming", "Completed", "Cancelled", "Booked"],

@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export const sendMail = async(email, otp, username) => {
+export const sendMail = async(email, otp, username, status) => {
     try {
     let testAccount = await nodemailer.createTestAccount();
 
@@ -9,22 +9,22 @@ export const sendMail = async(email, otp, username) => {
         host: 'smtp.ethereal.email',
         port: 587,
         auth: {
-            user: 'valentina.brakus56@ethereal.email',
-            pass: 'MB57Tp6rk7ScTA2Bue'
+            user: process.env.ETHEREAL_USERNAME,
+            pass: process.env.ETHEREAL_PASSWORD
         },
     });
 
     let info = await transporter.sendMail({
       from: 'Saloon <saloon.app@gmail.com>',
       to: "nnnnikhil3@gmail.com",
-      subject: "Saloon App Verification Code",
+      subject: `${status==="Sign Up" ? "Saloon App Verification Code" : "Saloon Forgot Password Code"}`,
       html: `<!DOCTYPE html>
     <html lang="en">
 
     <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resend OTP Verification</title>
+    <title>Saloon OTP Verification</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -116,7 +116,7 @@ export const sendMail = async(email, otp, username) => {
         <div class="content">
             <p>Hello ${username},</p>
 
-            <p>It seems you have requested to resend your OTP verification code. Use the following code to verify your email address:</p>
+            <p>It seems you have requested to resend your OTP verification code. Use the following code to ${status==="Sign Up" ? "verify your email address" : "Forgot Password"}:</p>
 
             <div class="otp-code">${otp}</div>
 
